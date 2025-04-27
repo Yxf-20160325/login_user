@@ -2,6 +2,7 @@ import ttkbootstrap as ttk
 import tkinter as tk
 from tkinter import messagebox
 import os
+import yagmail
 
 # ====================== 数据操作函数 ======================
 def load_users():
@@ -22,13 +23,12 @@ def load_users():
     return users
 
 def load_security_questions():
-    """加载安全问题(user_问题.txt格式: 用户名,问题,答案)"""
+    """加载安全问题"""
     if not os.path.exists("user_问题.txt"):
-        with open("user_问题.txt", "w", encoding='utf-8') as f:
-            pass  # 创建空文件
-    
+        return {}  # 直接返回空字典，避免递归
+        
     questions = {}
-    with open("user_问题.txt", "r", encoding='utf-8') as f:
+    with open("user_问题.txt", "r", encoding='utf-8') as f:  # 确保只读
         for line in f:
             line = line.strip()
             if not line:
@@ -39,7 +39,8 @@ def load_security_questions():
                     "question": parts[1],
                     "answer": parts[2]
                 }
-    return questions
+    return questions  # 确保这里是纯数据加载，不调用其他函数
+
 
 def save_user(username, password):
     """保存用户信息"""
@@ -74,7 +75,7 @@ def create_login_window():
     """登录窗口"""
     root = tk.Tk()
     root.title("系统登录")
-    root.geometry("400x350")
+    root.geometry("600x600")
     
     frame = ttk.Frame(root, padding="20")
     frame.pack(fill=tk.BOTH, expand=True)
@@ -126,11 +127,17 @@ def create_login_window():
         root.destroy()
      else:
         messagebox.showerror("错误", "用户名或密码错误")
-    
+    def email():
+        root_telephone = tk.Tk()
+        root_telephone.title("联系我们")
+        root_telephone.geometry("400x300")
+        ttk.Label(root_telephone, text="我们的邮箱地址：Yxf52013141@outlook.com").pack(pady=10)
+        root_telephone.mainloop()
     ttk.Button(button_frame, text="登录", command=login, width=10).pack(side=tk.LEFT, padx=5)
     ttk.Button(button_frame, text="注册", command=lambda: create_register_window(root), width=10).pack(side=tk.LEFT, padx=5)
     ttk.Button(button_frame, text="找回密码", command=create_recover_window, width=10).pack(side=tk.LEFT, padx=5)
-    
+    ttk.Button(button_frame, text="退出", command=root.destroy, width=10).pack(side=tk.LEFT, padx=5)
+    ttk.Button(button_frame, text="联系我们", command=email, width=10).pack(side=tk.LEFT, padx=5)
     root.mainloop()
 
 def create_user_panel(username):
@@ -172,16 +179,18 @@ def create_admin_panel():
     
     scroll_y.config(command=text_area.yview)
     text_area.config(state=tk.DISABLED)
+    
     def load_all_users():
         """加载用户数据到文本框"""
         users = load_users()
         questions = load_security_questions()
-        refresh_list()
+        
         text_area.config(state=tk.NORMAL)
         text_area.delete(1.0, tk.END)
         
         if not users:
             text_area.insert(tk.END, "当前没有用户数据")
+            text_area.config(state=tk.DISABLED)
             return
             
         text_area.insert(tk.END, f"共 {len(users)} 位用户\n\n")
@@ -189,13 +198,10 @@ def create_admin_panel():
         
         for username, pwd in users.items():
             text_area.insert(tk.END, f"用户名: {username}\n")
-            # 去除密码保护，显示明文
-            text_area.insert(tk.END, f"密码: {pwd}\n")
-
+            text_area.insert(tk.END, f"密码: {(pwd)}\n")
             
             if username in questions:
                 text_area.insert(tk.END, f"安全问题: {questions[username]['question']}\n")
-                # 新增密保答案显示
                 text_area.insert(tk.END, f"安全答案: {questions[username]['answer']}\n")
             else:
                 text_area.insert(tk.END, "安全提示: 未设置安全问题\n")
@@ -205,7 +211,66 @@ def create_admin_panel():
         text_area.config(state=tk.DISABLED)
     
     def refresh_list():
+        """刷新用户列表"""
         load_all_users()
+    
+    def delate_all_user():
+        """删除所有用户"""
+        if messagebox.askyesno("确认", "确定要删除所有用户吗？"):
+            open("user.txt", "w").close()
+            open("user_问题.txt", "w").close()
+            messagebox.showinfo("提示", "删除成功")   
+            refresh_list()         
+    
+    # 控制按钮区域
+    button_frame = ttk.Frame(main_frame)
+    button_frame.pack(fill=tk.X, pady=5)
+    
+    ttk.Button(button_frame, text="刷新列表", command=refresh_list).pack(side=tk.LEFT, padx=5)
+    
+    # 删除用户区域
+    delete_frame = ttk.Frame(main_frame)
+    delete_frame.pack(fill=tk.X, pady=5)
+    
+    ttk.Label(delete_frame, text="删除用户:").pack(side=tk.LEFT, padx=5)
+    entry_delete = ttk.Entry(delete_frame)
+    entry_delete.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=5)
+    
+    def delete_selected():
+        """删除指定用户"""
+        username = entry_delete.get().strip()
+        
+        if not username:
+            messagebox.showerror("错误", "请输入要删除的用户名")
+            return
+            
+        if username == "admin":
+            messagebox.showerror("错误", "不能删除管理员账户")
+            return
+            
+        users = load_users()
+        if username not in users:
+            messagebox.showerror("错误", "用户不存在")
+            return
+            
+        if messagebox.askyesno("确认", f"确定要删除用户 {username} 吗？"):
+            delete_user(username)
+            messagebox.showinfo("成功", f"用户 {username} 已删除")
+            entry_delete.delete(0, tk.END)
+            refresh_list()
+            
+    ttk.Button(delete_frame, text="删除", command=delete_selected, style="danger.TButton").pack(side=tk.RIGHT, padx=5)
+    ttk.Button(button_frame, text="删除所有用户", command=delate_all_user).pack(side=tk.RIGHT, padx=5)
+    
+    # 初始加载用户列表
+    refresh_list()
+    
+    ttk.Button(main_frame, text="退出", command=admin_window.destroy, style="primary.TButton").pack(pady=10)
+    
+    admin_window.mainloop()
+
+    def refresh_list():
+        load_users
     def delate_all_user():
         if messagebox.askyesno("确认", "确定要删除所有用户吗？"):
           open("user.txt", "w").close()
@@ -341,7 +406,33 @@ def create_admin_panel():
     ttk.Button(main_frame, text="退出", command=admin_window.destroy, style="primary.TButton").pack(pady=10)
     
     admin_window.mainloop()
-
+def load_all_users(text_widget):
+        """加载用户数据到文本框"""
+        users = load_users()
+        questions = load_security_questions()
+        
+        text_widget.config(state=tk.NORMAL)
+        text_widget.delete(1.0, tk.END)
+        
+        if not users:
+            text_widget.insert(tk.END, "当前没有用户数据")
+            return
+            
+        text_widget.insert(tk.END, f"共 {len(users)} 位用户\n\n")
+        text_widget.insert(tk.END, "="*60 + "\n\n")
+        
+        for username, pwd in users.items():
+            text_widget.insert(tk.END, f"用户名: {username}\n")
+            text_widget.insert(tk.END, f"密码: {'*'*len(pwd)}\n")
+            
+            if username in questions:
+                text_widget.insert(tk.END, f"安全问题: {questions[username]['question']}\n")
+            else:
+                text_widget.insert(tk.END, "安全提示: 未设置安全问题\n")
+            
+            text_widget.insert(tk.END, "-"*60 + "\n\n")
+        
+        text_widget.config(state=tk.DISABLED)
 def create_register_window(parent):
     """注册窗口"""
     win = tk.Toplevel(parent)
@@ -500,12 +591,15 @@ def create_recover_window():
                     messagebox.showinfo("找回成功", 
                                       f"您的密码是: {user_data[uname]}", 
                                       parent=win)
+                    messagebox.showinfo("提示", "请妥善保管您的密码", parent=win)
+                    
                     win.destroy()
+                   
                 else:
                     messagebox.showerror("错误", "用户数据不完整", parent=win)
             else:
                 messagebox.showerror("错误", "安全问题答案不正确", parent=win)
-        
+                
         ttk.Button(frame, text="上一步", command=lambda: current_step.set(1)).pack(side=tk.LEFT, padx=5, pady=15)
         ttk.Button(frame, text="验证", command=verify).pack(side=tk.RIGHT, padx=5, pady=15)
         return frame
