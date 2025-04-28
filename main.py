@@ -75,7 +75,7 @@ def create_login_window():
     """登录窗口"""
     root = tk.Tk()
     root.title("系统登录")
-    root.geometry("600x600")
+    root.geometry("800x800")
     
     frame = ttk.Frame(root, padding="20")
     frame.pack(fill=tk.BOTH, expand=True)
@@ -138,6 +138,12 @@ def create_login_window():
     ttk.Button(button_frame, text="找回密码", command=create_recover_window, width=10).pack(side=tk.LEFT, padx=5)
     ttk.Button(button_frame, text="退出", command=root.destroy, width=10).pack(side=tk.LEFT, padx=5)
     ttk.Button(button_frame, text="联系我们", command=email, width=10).pack(side=tk.LEFT, padx=5)
+    # 底部提示
+    ttk.Label(frame, text="© 2025 系统登录").pack(pady=10)
+    ttk.Label(frame, text="版本号：2.0.1.50428").pack(pady=5)
+    # 下一段代码为调试代码，在发出时删除
+    ttk.Button(button_frame, text="进入管理员", command=lambda:create_admin_panel(), width=10).pack(side=tk.LEFT, padx=5)
+
     root.mainloop()
 
 def create_user_panel(username):
@@ -152,6 +158,7 @@ def create_user_panel(username):
     ttk.Label(main_frame, text=f"欢迎您，{username}！", font=("Arial", 14, "bold")).pack(pady=20)
     
     # 用户功能区域
+    
     ttk.Button(main_frame, text="退出登录", command=user_window.destroy).pack(pady=20)
     
     user_window.mainloop()
@@ -199,7 +206,7 @@ def create_admin_panel():
         for username, pwd in users.items():
             text_area.insert(tk.END, f"用户名: {username}\n")
             text_area.insert(tk.END, f"密码: {(pwd)}\n")
-            
+            text_area.insert(tk.END,f"密码位数:{len(pwd)}\n")
             if username in questions:
                 text_area.insert(tk.END, f"安全问题: {questions[username]['question']}\n")
                 text_area.insert(tk.END, f"安全答案: {questions[username]['answer']}\n")
@@ -222,12 +229,120 @@ def create_admin_panel():
             messagebox.showinfo("提示", "删除成功")   
             refresh_list()         
     
+    def create_register_window():
+    
+     win = tk.Toplevel()
+     win.title("新用户注册（管理员版本）")
+     win.geometry("450x450")
+     win.resizable(False, False)
+    
+     main_frame = ttk.Frame(win, padding="20")
+     main_frame.pack(fill=tk.BOTH, expand=True)
+     
+     ttk.Label(main_frame, text="新用户注册", font=('Arial', 14, 'bold')).pack(pady=(0, 15))
+     
+    # 表单区域
+     form_frame = ttk.Frame(main_frame)
+     form_frame.pack(fill=tk.X, pady=5)
+    
+    # 用户名
+     ttk.Label(form_frame, text="用户名:").grid(row=0, column=0, sticky='e', padx=5, pady=5)
+     entry_user = ttk.Entry(form_frame)
+     entry_user.grid(row=0, column=1, sticky='ew', padx=5, pady=5)
+    
+    # 密码
+     ttk.Label(form_frame, text="密码:").grid(row=1, column=0, sticky='e', padx=5, pady=5)
+     entry_pass = ttk.Entry(form_frame, show="*")
+     entry_pass.grid(row=1, column=1, sticky='ew', padx=5, pady=5)
+    
+    # 安全问题
+     ttk.Label(form_frame, text="安全问题:").grid(row=2, column=0, sticky='e', padx=5, pady=5)
+     security_questions = [
+        "你的小学名称是什么？",
+        "你的第一只宠物叫什么？",
+        "你的出生城市是哪里？",
+        "你母亲的名字是什么？",
+        "你父亲的名字是什么？",
+        "你最喜爱的电影是什么？",
+        "你的第一辆车是哪一辆？",
+        "你的理想工作是什么？",
+        "你的最高学历是哪一层次？",
+        "你的出生日期是多少？",
+        "你的出生月份是什么？",
+        "你的出生年份是多少？",
+        "你的父亲的出生日期是多少？",
+        "你的秘密是什么？",
+        "你最喜爱的食物是什么？"
+
+     ]
+     question_var = tk.StringVar(value=security_questions[0])
+     ttk.OptionMenu(form_frame, question_var, *security_questions).grid(row=2, column=1, sticky='ew', padx=5, pady=5)
+    
+    # 安全答案
+     ttk.Label(form_frame, text="安全问题答案:").grid(row=3, column=0, sticky='e', padx=5, pady=5)
+     entry_answer = ttk.Entry(form_frame)
+     entry_answer.grid(row=3, column=1, sticky='ew', padx=5, pady=5)
+    
+    # 注册按钮
+     def on_register():
+        username = entry_user.get().strip()
+        password = entry_pass.get()
+        question = question_var.get()
+        answer = entry_answer.get().strip()    
+        users = load_users()
+        if not username:
+            messagebox.showerror("错误", "用户名不能为空", parent=win)
+            return
+        if username in users:
+            messagebox.showerror("错误", "该用户名已被使用", parent=win)
+            return
+        if username == "admin":
+            messagebox.showerror("错误", "用户名不能为admin", parent=win)
+            return  
+        # 保存用户数据
+        save_user(username, password)
+        
+        # 保存安全问题
+        save_security_question(username, question, answer)
+        
+        messagebox.showinfo("成功", "注册成功！", parent=win)
+        win.destroy()
+    
+     ttk.Button(main_frame, text="立即注册（限制解除）", command=on_register, style='success.TButton').pack(pady=15)
+
     # 控制按钮区域
     button_frame = ttk.Frame(main_frame)
     button_frame.pack(fill=tk.X, pady=5)
     
     ttk.Button(button_frame, text="刷新列表", command=refresh_list).pack(side=tk.LEFT, padx=5)
-    
+    ttk.Button(button_frame, text="注册新用户（限制解除）", command=create_register_window).pack(side=tk.LEFT, padx=5)
+
+    def next1():
+        next_windows = tk.Toplevel()
+        next_windows.title("更多功能")
+        next_windows.geometry("800x800")
+        ttk.Label(next_windows, text="仪表盘", font=('Arial', 14, 'bold')).pack(pady=(0, 15))
+        ttk.Label(next_windows, text="user.txt文件大小（单位字节）", font=('Arial', 14, 'bold')).pack(pady=(0, 15))
+        text = ttk.Text(next_windows, height=1, width=20)
+        text.insert(1.0,os.path.getsize("D:\\系统文件夹\\desktop\\代码\\user.txt"))
+        text.pack()
+        ttk.Label(next_windows, text="user_问题.txt文件大小（单位字节）", font=('Arial', 14, 'bold')).pack(pady=(0, 15))
+        text1 = ttk.Text(next_windows, height=1, width=20)
+        text1.insert(1.0,os.path.getsize("D:\\系统文件夹\\desktop\\代码\\user_问题.txt"))
+        text1.pack()
+        
+        def next_1():
+            text.delete(1.0,tk.END)
+            text.insert(1.0,os.path.getsize("D:\\系统文件夹\\desktop\\代码\\user.txt"))
+            text1.delete(1.0,tk.END)
+            text1.insert(1.0,os.path.getsize("D:\\系统文件夹\\desktop\\代码\\user_问题.txt"))
+            next_windows.after(1000,next_1)
+
+        ttk.Button(next_windows, text="自动刷新", command=next_1()).pack(pady=15)
+        ttk.Button(next_windows, text="返回", command=next_windows.destroy).pack(pady=15)
+        
+        
+    ttk.Button(button_frame, text="更多功能", command=next1).pack(side=tk.LEFT, padx=5)
     # 删除用户区域
     delete_frame = ttk.Frame(main_frame)
     delete_frame.pack(fill=tk.X, pady=5)
@@ -552,12 +667,13 @@ def create_recover_window():
                 return
                 
             ques_data = load_security_questions()
-            if uname not in ques_data:
-                messagebox.showerror("错误", "该用户未设置安全问题/无此用户", parent=win)
-                return
             if uname == "admin":
                 messagebox.showerror("错误", "管理员账户无法找回密码", parent=win)
                 return
+            elif uname not in ques_data:
+                messagebox.showerror("错误", "该用户未设置安全问题/无此用户", parent=win)
+                return
+            
             
             question.set(ques_data[uname]['question'])
             current_step.set(2)
@@ -592,7 +708,7 @@ def create_recover_window():
                                       f"您的密码是: {user_data[uname]}", 
                                       parent=win)
                     messagebox.showinfo("提示", "请妥善保管您的密码", parent=win)
-                    
+                    print("密码是：",user_data[uname])           
                     win.destroy()
                    
                 else:
@@ -611,3 +727,4 @@ def create_recover_window():
 # ====================== 程序入口 ======================
 if __name__ == "__main__":
     create_login_window()
+    
