@@ -2,7 +2,6 @@ import ttkbootstrap as ttk
 import tkinter as tk
 from tkinter import messagebox
 import os
-import yagmail
 
 # ====================== 数据操作函数 ======================
 def load_users():
@@ -140,9 +139,13 @@ def create_login_window():
     ttk.Button(button_frame, text="联系我们", command=email, width=10).pack(side=tk.LEFT, padx=5)
     # 底部提示
     ttk.Label(frame, text="© 2025 系统登录").pack(pady=10)
-    ttk.Label(frame, text="版本号：2.0.1.50428").pack(pady=5)
-    # 下一段代码为调试代码，在发出时删除
-    ttk.Button(button_frame, text="进入管理员", command=lambda:create_admin_panel(), width=10).pack(side=tk.LEFT, padx=5)
+    ttk.Label(frame, text="版本号：2.0.1.50429").pack(pady=5)
+    
+    admin_user = {"admin","superadmin"}
+    admin_password = {"admin","superadmin"}
+
+    # 下一段代码为调试代码
+    # ttk.Button(button_frame, text="进入管理员", command=lambda:create_admin_panel(), width=10).pack(side=tk.LEFT, padx=5)
 
     root.mainloop()
 
@@ -218,7 +221,6 @@ def create_admin_panel():
         text_area.config(state=tk.DISABLED)
     
     def refresh_list():
-        """刷新用户列表"""
         load_all_users()
     
     def delate_all_user():
