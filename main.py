@@ -2,7 +2,7 @@ import ttkbootstrap as ttk
 import tkinter as tk
 from tkinter import messagebox
 import os
-
+import webbrowser
 # ====================== 数据操作函数 ======================
 def load_users():
     """加载用户数据(user.txt格式: 用户名,密码)"""
@@ -20,7 +20,9 @@ def load_users():
             if len(parts) == 2:
                 users[parts[0]] = parts[1]
     return users
-
+def open_my_github_web():
+    """打开我的GitHub网页"""
+    webbrowser.open("https://bgithub.xyz/Yxf-20160325/login_user",new=1)
 def load_security_questions():
     """加载安全问题"""
     if not os.path.exists("user_问题.txt"):
@@ -68,13 +70,42 @@ def delete_user(username):
         with open("user_问题.txt", "w", encoding='utf-8') as f:
             for uname, data in questions.items():
                 f.write(f"{uname},{data['question']},{data['answer']}\n")
-
+def my_login_user_web():
+    # 浏览器
+    login_user_web = tk.Tk()
+    login_user_web.title("浏览器")
+    login_user_web.geometry("800x800")
+    ttk.Label(login_user_web, text="浏览器").pack(pady=10)
+    ttk.Label(login_user_web, text="请输入网址:").pack(pady=5)
+    entry_login_user_web = ttk.Entry(login_user_web)
+    entry_login_user_web.pack(pady=5, fill=tk.X)
+    label = ttk.Label(login_user_web, text="搜索")
+    label.pack(pady=5)
+    entry_login_user_web_1 = ttk.Entry(login_user_web)
+    entry_login_user_web_1.pack(pady=5, fill=tk.X)
+    def search():
+        search_1 = entry_login_user_web_1.get().strip()
+        webbrowser.open("https://cn.bing.com/search?&q=" + search_1,new=1)
+    ttk.Button(login_user_web, text="搜索", command=search, width=10).pack(side=tk.LEFT, padx=5)
+    
+    def open_url():
+        if entry_login_user_web.get() == "debug_admin":
+            create_admin_panel()
+            login_user_web.destroy()
+        url = entry_login_user_web.get().strip()
+        if not url:
+            messagebox.showerror("错误", "请输入网址")
+            return
+        
+    # 按钮
+    ttk.Button(login_user_web, text="打开", command=open_url, width=10).pack(side=tk.LEFT, padx=5)
+    ttk.Button(login_user_web, text="退出", command=login_user_web.destroy, width=10).pack(side=tk.LEFT, padx=5)
 # ====================== 界面函数 ======================
 def create_login_window():
     """登录窗口"""
     root = tk.Tk()
     root.title("系统登录")
-    root.geometry("800x800")
+    root.geometry("900x900")
     
     frame = ttk.Frame(root, padding="20")
     frame.pack(fill=tk.BOTH, expand=True)
@@ -99,21 +130,15 @@ def create_login_window():
      username = entry_username.get().strip()
      password = entry_password.get().strip()
     
-     if not username or not password:
-        messagebox.showerror("错误", "用户名和密码不能为空")
+     if not username:
+        messagebox.showerror("错误", "用户名不能为空")
         return
-        
      users = load_users()
      if username == "superadmin" and password == "superadmin":
         # 先创建新窗口
         create_admin_panel()
         # 然后销毁原窗口
         root.destroy()
-        superadmin()
-        def superadmin():
-            create_admin_panel()
-            
-            
      if username == "admin" and password == "admin":
         # 先创建新窗口
         create_admin_panel()
@@ -133,20 +158,22 @@ def create_login_window():
         ttk.Label(root_telephone, text="我们的邮箱地址：Yxf52013141@outlook.com").pack(pady=10)
         root_telephone.mainloop()
     ttk.Button(button_frame, text="登录", command=login, width=10).pack(side=tk.LEFT, padx=5)
-    ttk.Button(button_frame, text="注册", command=lambda: create_register_window(root), width=10).pack(side=tk.LEFT, padx=5)
+    ttk.Button(button_frame, text="注册", command=lambda:create_register_window(root), width=10).pack(side=tk.LEFT, padx=5)
     ttk.Button(button_frame, text="找回密码", command=create_recover_window, width=10).pack(side=tk.LEFT, padx=5)
     ttk.Button(button_frame, text="退出", command=root.destroy, width=10).pack(side=tk.LEFT, padx=5)
     ttk.Button(button_frame, text="联系我们", command=email, width=10).pack(side=tk.LEFT, padx=5)
+    ttk.Button(button_frame, text="github", command=open_my_github_web, width=10).pack(side=tk.LEFT, padx=5)
+    ttk.Button(button_frame, text="浏览器", command=my_login_user_web, width=10).pack(side=tk.LEFT, padx=5)
     # 底部提示
     ttk.Label(frame, text="© 2025 系统登录").pack(pady=10)
-    ttk.Label(frame, text="版本号：2.0.1.50429").pack(pady=5)
+    ttk.Label(frame, text="版本号：2.0.1.50501").pack(pady=5)
     
-    admin_user = {"admin","superadmin"}
-    admin_password = {"admin","superadmin"}
+    # admin_user = {"admin","superadmin"}
+    # admin_password = {"admin","superadmin"}
 
     # 下一段代码为调试代码
-    # ttk.Button(button_frame, text="进入管理员", command=lambda:create_admin_panel(), width=10).pack(side=tk.LEFT, padx=5)
-
+    ttk.Button(button_frame, text="进入管理员", command=lambda:create_admin_panel(), width=10).pack(side=tk.LEFT, padx=5)
+    
     root.mainloop()
 
 def create_user_panel(username):
@@ -210,12 +237,13 @@ def create_admin_panel():
             text_area.insert(tk.END, f"用户名: {username}\n")
             text_area.insert(tk.END, f"密码: {(pwd)}\n")
             text_area.insert(tk.END,f"密码位数:{len(pwd)}\n")
+
             if username in questions:
                 text_area.insert(tk.END, f"安全问题: {questions[username]['question']}\n")
                 text_area.insert(tk.END, f"安全答案: {questions[username]['answer']}\n")
             else:
                 text_area.insert(tk.END, "安全提示: 未设置安全问题\n")
-            
+                text_area.insert(tk.END, "*建议删除\n")
             text_area.insert(tk.END, "-"*60 + "\n\n")
         
         text_area.config(state=tk.DISABLED)
@@ -303,7 +331,7 @@ def create_admin_panel():
             return  
         # 保存用户数据
         save_user(username, password)
-        
+            
         # 保存安全问题
         save_security_question(username, question, answer)
         
@@ -318,7 +346,7 @@ def create_admin_panel():
     
     ttk.Button(button_frame, text="刷新列表", command=refresh_list).pack(side=tk.LEFT, padx=5)
     ttk.Button(button_frame, text="注册新用户（限制解除）", command=create_register_window).pack(side=tk.LEFT, padx=5)
-
+    
     def next1():
         next_windows = tk.Toplevel()
         next_windows.title("更多功能")
@@ -387,7 +415,7 @@ def create_admin_panel():
     admin_window.mainloop()
 
     def refresh_list():
-        load_users
+        load_all_users
     def delate_all_user():
         if messagebox.askyesno("确认", "确定要删除所有用户吗？"):
           open("user.txt", "w").close()
@@ -554,7 +582,7 @@ def create_register_window(parent):
     """注册窗口"""
     win = tk.Toplevel(parent)
     win.title("新用户注册")
-    win.geometry("450x450")
+    win.geometry("500x500")
     win.resizable(False, False)
     
     main_frame = ttk.Frame(win, padding="20")
@@ -618,7 +646,9 @@ def create_register_window(parent):
         if len(password) < 6:
             messagebox.showerror("错误", "密码长度不能少于6位", parent=win)
             return
-            
+        if len(password) > 10:
+            messagebox.showerror("错误", "密码长度不能大于10位", parent=win)
+            return
         users = load_users()
         if username in users:
             messagebox.showerror("错误", "该用户名已被使用", parent=win)
